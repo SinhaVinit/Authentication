@@ -1,12 +1,15 @@
 //jshint esversion:6
 
+require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const { FindCursor } = require("mongodb");
+const encrypt = require("mongoose-encryption");
 
 const app = express();
+
+// console.log(process.env.API_KEY);
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -14,10 +17,13 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 mongoose.connect("mongodb+srv://sample-hostname:27017/?maxPoolSize=20&w=majority", {useNewUrlParser: true});
 
-const userSchema = {
+const userSchema = new mongoose.Schema({
     email: String,
     password: String
-};
+});
+
+// const secret = "Thisismylittlesecret.";
+userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ["password"]});
 
 const User = mongoose.model("User", userSchema);
 
@@ -59,6 +65,7 @@ app.post("/login", function(req,res) {
         else {
             if (foundUser) {
                 if (foundUser.password === password) {
+                    // console.log(foundUser.password);
                     res.render("secrets");
                 }
                 else {
